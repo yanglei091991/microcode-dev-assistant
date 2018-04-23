@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-   
-from PyQt4.QtGui import QMainWindow, QToolBar, QAction, QIcon, QCheckBox, QTextEdit, QFileDialog, QLineEdit, QHBoxLayout, QSplitter, QMenu
+from PyQt4.QtGui import QMainWindow, QToolBar, QAction, QIcon, QCheckBox, QTextEdit, QFileDialog, QLineEdit, QHBoxLayout, QSplitter, QMenu, QMessageBox
 from PyQt4.QtCore import pyqtSignal, Qt, SIGNAL, pyqtSlot, QString
 from res import qrc_resources 
 from view.MicrocodeTableWidget.MicrocodeTableWidget import MicrocodeTableWidget
@@ -245,7 +245,14 @@ class MainWindow(QMainWindow):
         self.close()
 
     def closeEvent(self, event):
-        self.closeWindow()
+        result = QMessageBox.question(self,
+                                      "Confirm Exit...",
+                                      "Are you sure you want to exit ?",
+                                      QMessageBox.Yes| QMessageBox.No)
+        event.ignore()
+        if result == QMessageBox.Yes:
+            event.accept()
+        
 
     @pyqtSlot(bool)	
     def registerCheckSlot(self, checkState):
