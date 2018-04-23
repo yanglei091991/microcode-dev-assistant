@@ -11,7 +11,7 @@ class SetFSMNameWidget(QDialog):
         self.setWindowTitle("Set FSM Name")
         self.tip_label = QLabel("Set a FSM name, staring with letter of '_'")
         self.lineEdit = QLineEdit()
-        regx = QRegExp("[a-zA-Z]+[0-9]+$")
+        regx = QRegExp("[_a-zA-Z]+[0-9]+$")
         validator = QRegExpValidator(regx, self.lineEdit)
         self.lineEdit.setValidator(validator)
 
@@ -22,7 +22,7 @@ class SetFSMNameWidget(QDialog):
         lay.addWidget(self.OKButton)
         lay.addWidget(self.cancelButton)
         mainLay = QVBoxLayout()
-        mainLay.addWidget(tip_label)
+        mainLay.addWidget(self.tip_label)
         mainLay.addWidget(self.lineEdit)
         mainLay.addLayout(lay)
 
