@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-   
-from PyQt4.QtGui import QDialog, QRegExpValidator, QPushButton, QHBoxLayout, QVBoxLayout, QLineEdit
+from PyQt4.QtGui import QLabel, QDialog, QRegExpValidator, QPushButton, QHBoxLayout, QVBoxLayout, QLineEdit
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, SIGNAL, Qt, QRegExp
 from view.Utils import warning
 
@@ -8,6 +8,8 @@ class SetFSMNameWidget(QDialog):
     def __init__(self, column, parent = None):  
         super(SetFSMNameWidget, self).__init__(parent)   
 
+        self.setWindowTitle("Set FSM Name")
+        self.tip_label = QLabel("Set a FSM name, staring with letter of '_'")
         self.lineEdit = QLineEdit()
         regx = QRegExp("[a-zA-Z]+[0-9]+$")
         validator = QRegExpValidator(regx, self.lineEdit)
@@ -20,6 +22,7 @@ class SetFSMNameWidget(QDialog):
         lay.addWidget(self.OKButton)
         lay.addWidget(self.cancelButton)
         mainLay = QVBoxLayout()
+        mainLay.addWidget(tip_label)
         mainLay.addWidget(self.lineEdit)
         mainLay.addLayout(lay)
 
