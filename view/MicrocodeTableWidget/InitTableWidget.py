@@ -20,7 +20,7 @@ class InitTableWidget(QTableWidget):
         #self.setStyleSheet("QTableWidget::item{text-align: center;}")
 
         self.initRowCount = 2000
-        self.initColumnCount = 1
+        self.initColumnCount = 20
         self.currentRowNum = 0
         self.currentColumnNum = 0
         self.currentTopRow = 0

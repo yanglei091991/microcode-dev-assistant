@@ -11,20 +11,20 @@ class MainWindow(QMainWindow):
     def __init__(self, parent = None):  
         super(MainWindow, self).__init__(parent)   
 
-	#create data base
-	database = MicrocodeDB()
-	database.createTable()
-	
+        #create data base
+        database = MicrocodeDB()
+        database.createTable()
+        
         self.register = ["KI12", "KI13", "KI14", "KI15"]
         self.setWindowTitle("Graphic Microcode Editor")
         self.resize(800, 600)
         splitter = QSplitter(Qt.Horizontal, self)
         self.microcodeTableWidget = MicrocodeTableWidget(self.register, database, splitter)
         self.mccTreeWidget = MCCTreeWidget(splitter)
-	splitter.addWidget(self.mccTreeWidget)
-	splitter.addWidget(self.microcodeTableWidget)
+        splitter.addWidget(self.mccTreeWidget)
+        splitter.addWidget(self.microcodeTableWidget)
         splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 4)	
+        splitter.setStretchFactor(1, 4)        
         self.setCentralWidget(splitter)
         self.createAction()
         self.createContextMenu()
@@ -53,11 +53,11 @@ class MainWindow(QMainWindow):
         self.saveAction.setShortcut("Ctrl+S")
         self.saveAction.setStatusTip("Save the Microcode table to disk")
         self.connect(self.saveAction, SIGNAL("triggered()"), self.saveFile)
-	self.saveAction.setEnabled(False)
-	
-	self.saveasAction = QAction(QIcon(":/saveas.png"), self.tr("Save As"), self)
-	self.connect(self.saveasAction, SIGNAL("triggered()"), self.saveasFile)
-	self.saveasAction.setEnabled(False)
+        self.saveAction.setEnabled(False)
+        
+        self.saveasAction = QAction(QIcon(":/saveas.png"), self.tr("Save As"), self)
+        self.connect(self.saveasAction, SIGNAL("triggered()"), self.saveasFile)
+        self.saveasAction.setEnabled(False)
 
         self.exitAction = QAction(self.tr("Exit"), self)
         self.exitAction.setShortcut("Ctrl+Q")
@@ -68,24 +68,24 @@ class MainWindow(QMainWindow):
         self.cutAction.setShortcut("Ctrl+X")
         self.cutAction.setStatusTip("Cut the current selection's contents to the clipboard")
         self.connect(self.cutAction, SIGNAL("triggered()"), self.microcodeTableWidget.cut)
-	self.cutAction.setEnabled(False)
-	
+        self.cutAction.setEnabled(False)
+        
         self.copyAction = QAction(QIcon(":/copy.png"), self.tr("Copy"), self)
         self.copyAction.setShortcut("Ctrl+C")
         self.copyAction.setStatusTip("Copy the current selection's contents to the clipboard")
         self.connect(self.copyAction, SIGNAL("triggered()"), self.microcodeTableWidget.copy)
-	self.copyAction.setEnabled(False)
-	
+        self.copyAction.setEnabled(False)
+        
         self.pasteAction = QAction(QIcon(":/paste.png"), self.tr("Paste"), self)
         self.pasteAction.setShortcut("Ctrl+V")
         self.pasteAction.setStatusTip("Paste the clipboard's contents into the current selection")
         self.connect(self.pasteAction, SIGNAL("triggered()"), self.microcodeTableWidget.paste)
-	self.pasteAction.setEnabled(False)
-	
-	self.fillAction = QAction(QIcon(":/fill.png"), self.tr("Fill color"), self)
-	self.connect(self.fillAction, SIGNAL("triggered()"), self.microcodeTableWidget.fileColor)
-	self.fillAction.setEnabled(False)
-	
+        self.pasteAction.setEnabled(False)
+        
+        self.fillAction = QAction(QIcon(":/fill.png"), self.tr("Fill color"), self)
+        self.connect(self.fillAction, SIGNAL("triggered()"), self.microcodeTableWidget.fileColor)
+        self.fillAction.setEnabled(False)
+        
         self.clearAction = QAction(self.tr("Clear"), self)
         self.clearAction.setShortcut("Del")
         self.clearAction.setStatusTip("Delete the current selection's contents")
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
     def openFile(self):
         fileName = QFileDialog.getOpenFileName(self, self.tr("select file"), "/")
         if fileName != "":
-	    self.setWindowTitle(fileName)
+            self.setWindowTitle(fileName)
             self.microcodeTableWidget.initTable()
             self.microcodeTableWidget.openFile(fileName)
             self.saveAction.setEnabled(True)
@@ -224,37 +224,41 @@ class MainWindow(QMainWindow):
             fileName = QFileDialog.getSaveFileName(self, self.tr("Save File"), "untitled.mpu.s")
             if fileName != "":
                 self.microcodeTableWidget.saveFile(fileName)
-	        self.setWindowTitle(fileName)
-	else:
-	    fileName = self.windowTitle()
-	    if fileName[-1] == "*":
-		fileName = fileName[ : len(fileName) - 1]
+                self.setWindowTitle(fileName)
+        else:
+            fileName = self.windowTitle()
+            if fileName[-1] == "*":
+                fileName = fileName[ : len(fileName) - 1]
             if fileName != "":
                 self.microcodeTableWidget.saveFile(fileName)
-	        self.setWindowTitle(fileName)
-	        
+                self.setWindowTitle(fileName)
+                
     @pyqtSlot()
     def saveasFile(self):
         fileName = QFileDialog.getSaveFileName(self, self.tr("Save File"), "untitled.mpu.s")
         if fileName != "":
             self.microcodeTableWidget.saveFile(fileName)
-	    self.setWindowTitle(fileName)      
+            self.setWindowTitle(fileName)      
 
     @pyqtSlot()
     def closeWindow(self):
         self.close()
 
     def closeEvent(self, event):
-        result = QMessageBox.question(self,
+        filename = self.windowTitle()
+        if(filename[-1] == '*'):
+            result = QMessageBox.question(self,
                                       "Confirm Exit...",
-                                      "Are you sure you want to exit ?",
+                                      "Modification has not been saved. Are you sure you want to exit ?",
                                       QMessageBox.Yes| QMessageBox.No)
-        event.ignore()
-        if result == QMessageBox.Yes:
+            event.ignore()
+            if result == QMessageBox.Yes:
+                event.accept()
+        else:
             event.accept()
         
 
-    @pyqtSlot(bool)	
+    @pyqtSlot(bool)        
     def registerCheckSlot(self, checkState):
         if self.sender() in self.registerCheck:
             idx = self.registerCheck.index(self.sender())
@@ -298,12 +302,12 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(int, int)
     def fileContentChanged(self, row, column):
-	name = self.windowTitle()
-	if name[-1] == "*":
-	    return
-	else:
-	    name += "*"
-	    self.setWindowTitle(name)
+        name = self.windowTitle()
+        if name[-1] == "*":
+            return
+        else:
+            name += "*"
+            self.setWindowTitle(name)
 
 
 
