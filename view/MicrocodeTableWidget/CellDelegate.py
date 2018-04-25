@@ -29,7 +29,8 @@ class CellDelegate(QItemDelegate):
         self.floatDialogCloseSignal.emit()
 
     def textChangedSlot(self, text):
-        self.searchTreeSignal.emit(self.tableRow, self.tableColumn, str(text))
+        if len(text) > 1:
+            self.searchTreeSignal.emit(self.tableRow, self.tableColumn, str(text))
 
     def lineEditClear(self):
         self.lineEdit.clear()

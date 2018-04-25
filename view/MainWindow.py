@@ -32,8 +32,9 @@ class MainWindow(QMainWindow):
         self.createMenus()
         self.microcodeTableWidget.itemRegStateSignal.connect(self.itemRegStateSlot)
         self.microcodeTableWidget.cellChanged.connect(self.fileContentChanged)
-        self.microcodeTableWidget.cellDelegate.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
-        self.microcodeTableWidget.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
+        #111 auto-fill, disable auto-fill for now
+        #self.microcodeTableWidget.cellDelegate.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
+        #self.microcodeTableWidget.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
         self.mccTreeWidget.floatDialogShowSignal.connect(self.microcodeTableWidget.floatDialogShowSlot)
         self.newFileName = "New File*"
 

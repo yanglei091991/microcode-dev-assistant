@@ -23,12 +23,12 @@ class MicrocodeTableWidget(InitTableWidget):
         #record the previous point row
         self.previousPointRow = -1
         #MMPULite parser
-	self.mmpulite = MMPULite()
-	self.errorColor = QColor(255, 99, 71)
+        self.mmpulite = MMPULite()
+        self.errorColor = QColor(255, 99, 71)
 
     @pyqtSlot(int, int, int, int)   
     def currentCellChangedSlot(self, currentRow, currentColumn, previousRow, previousColumn):
-	self.dataParser(previousRow, previousColumn)
+        self.dataParser(previousRow, previousColumn)
         self.floatDialogCloseSlot()
         self.CurrentRow = previousRow
         self.CurrentColumn = previousColumn
@@ -48,20 +48,20 @@ class MicrocodeTableWidget(InitTableWidget):
         self.itemRegStateSignal.emit(regList, marginList)   
         #show code input row
         if self.previousPointRow != -1:
-	    for i in self.previousPointRow:
+            for i in self.previousPointRow:
                 self.earserWholeRowColor(i)   
         item = self.item(currentRow, currentColumn)
         if item != None:
             if item.text() == "":
                 return  
-	    if item.whatsThis() == "" or item.whatsThis() == "-1":
-		return
-	    out = item.whatsThis().split("-")
-	    self.previousPointRow = []   
-	    for i in out:
-	        rowColor = []
-	        outRow = currentRow + int(i)	
-	        color = self.getRowBackground(outRow)
+            if item.whatsThis() == "" or item.whatsThis() == "-1":
+                return
+            out = item.whatsThis().split("-")
+            self.previousPointRow = []   
+            for i in out:
+                rowColor = []
+                outRow = currentRow + int(i)        
+                color = self.getRowBackground(outRow)
                 self.setWholeRowColor(outRow, Qt.blue) 
                 rowColor.append(outRow)
                 rowColor.append(color)
@@ -79,33 +79,37 @@ class MicrocodeTableWidget(InitTableWidget):
       
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Down:
-            if self.floatDialog.isVisible() == True:
-                if self.floatDialogFocus == 0:
-                    item = self.floatDialog.item(0)
-                    if item != None:
-                        self.floatDialog.setCurrentItem(item)
-                        self.floatDialogFocus = 1
-                elif self.floatDialogFocus == 1:
-                    row = self.floatDialog.currentRow()
-                    num = self.floatDialog.count()
-	    	    if row + 1 < num:
-                        self.floatDialog.setCurrentRow(row + 1)	
+            if self.floatDialog != 0:
+                if self.floatDialog.isVisible() == True:
+                    if self.floatDialogFocus == 0:
+                        item = self.floatDialog.item(0)
+                        if item != None:
+                            self.floatDialog.setCurrentItem(item)
+                            self.floatDialogFocus = 1
+                    elif self.floatDialogFocus == 1:
+                        row = self.floatDialog.currentRow()
+                        num = self.floatDialog.count()
+                        if row + 1 < num:
+                            self.floatDialog.setCurrentRow(row + 1)        
         elif event.key() == Qt.Key_Up and self.floatDialogFocus == 1:
             row = self.floatDialog.currentRow()
             if row > 0:
                 self.floatDialog.setCurrentRow(row - 1)
         elif event.key() == Qt.Key_Return:
-            item = self.floatDialog.currentItem()
-            if item == None:
-		return
-            text = item.text()
-            column = self.currentColumn()
-            row = self.currentRow()
-            item = QTableWidgetItem(text)	   
-            self.setItem(row, column, item)
-            self.floatDialogCloseSlot()
+            if self.floatDialog != 0:
+                item = self.floatDialog.currentItem()
+                if item == None:
+                    return
+                text = item.text()
+                column = self.currentColumn()
+                row = self.currentRow()
+                item = QTableWidgetItem(text)           
+                self.setItem(row, column, item)
+                self.floatDialogCloseSlot()
+            
         if event.key() < 0x20 or event.key() > 0xff:
-            return
+            if event.key() != Qt.Key_Backspace:
+                return
         column = self.currentColumn()
         row = self.currentRow()
         item = self.item(row, column)
@@ -113,14 +117,29 @@ class MicrocodeTableWidget(InitTableWidget):
             string = item.text()
         else:
             string = ""
-        if row == self.CurrentRow and column == self.CurrentColumn:
-            self.setItem(row, column, QTableWidgetItem(string + event.text()))
+        if event.key() != Qt.Key_Backspace:
+            if row == self.CurrentRow and column == self.CurrentColumn:
+                self.setItem(row, column, QTableWidgetItem(string + event.text()))
+            else:
+                self.setItem(row, column, QTableWidgetItem(event.text()))
+        
         else:
-            self.setItem(row, column, QTableWidgetItem(event.text()))
+            if row == self.CurrentRow and column == self.CurrentColumn:
+                if len(string) > 1:
+                    string = string[0:len(string)-1]
+                else:
+                    string = ""
+                self.setItem(row, column, QTableWidgetItem(string))
+            else:
+                string = ""
+                self.setItem(row, column, QTableWidgetItem(string))
+           
         self.CurrentRow = row
         self.CurrentColumn = column
         text = self.item(row, column).text()
-        self.searchTreeSignal.emit(row, column, text)
+        #dissable auto-fill
+        #if len(text) > 1:
+        #    self.searchTreeSignal.emit(row, column, text)
 
     def setRectInfo(self, reg):
         rectInfo = RectInfo()
@@ -301,15 +320,15 @@ class MicrocodeTableWidget(InitTableWidget):
         self.viewport().update()                              
 
     def getRowBackground(self, row):
-	rowColor = []
-	count = self.getColumnCount()
-	for i in xrange(count):
-	    item = self.item(row, i)
-	    if item == None:
-		self.setItem(row, i, QTableWidgetItem(""))
-		item = self.item(row, i)
-	    rowColor.append(item.background())
-	return rowColor
+        rowColor = []
+        count = self.getColumnCount()
+        for i in xrange(count):
+            item = self.item(row, i)
+            if item == None:
+                self.setItem(row, i, QTableWidgetItem(""))
+                item = self.item(row, i)
+            rowColor.append(item.background())
+        return rowColor
 
     def setWholeRowColor(self, row, color):
         count = self.getColumnCount()
@@ -379,54 +398,54 @@ class MicrocodeTableWidget(InitTableWidget):
             line = ""
             arrayLen = len(self.array)
             for row in xrange(self.loopEndRow + 1):
-	        if row < arrayLen:
+                if row < arrayLen:
                     text = self.array[row][column]
                     textList = text.split(".")
                 else:
-		    textList[0] = ""
-		    textList[2] = ""
+                    textList[0] = ""
+                    textList[2] = ""
                 #get loop start info
                 if textList[0] != "": 
                     cmpList = [] 
                     if row == 0 or line == "NOP":
-			endFlag = 0
+                        endFlag = 0
                         line = "" 
-		    elif line != "":
-		        endFlag = 0
+                    elif line != "":
+                        endFlag = 0
                         line += " || "
                     cmpList = self.searchLPStart(rectList, row)
                     if cmpList != []:
-		        #start lpto row
-		        if self.startList[headerText] > row:
-			    self.startList[headerText] = row
-	            oneLpto = []
-	            loop = ""
+                        #start lpto row
+                        if self.startList[headerText] > row:
+                            self.startList[headerText] = row
+                    oneLpto = []
+                    loop = ""
                     for info in cmpList:  
-		        if info.startRow == info.endRow:
-			    oneLpto.append(info)
-			else:
-			    if info.margin == 0:
-			        loop = "LPTO (%df ) @ (%s) || "%(info.num, self.register[info.reg])
-			    else:
+                        if info.startRow == info.endRow:
+                            oneLpto.append(info)
+                        else:
+                            if info.margin == 0:
+                                loop = "LPTO (%df ) @ (%s) || "%(info.num, self.register[info.reg])
+                            else:
                                 loop = "LPTO (%df ) @ (%s - %d) || "%(info.num, self.register[info.reg], info.margin)
                             line += loop
                     line = line[:-4]
                     line += ";\n"
                     if endFlag != 0:
-		        text = lines[0 - endFlag - 1]
-		        if text == "NOP;\n":
-			    del lines[0 - endFlag - 1]
-			    lines.insert(0 - endFlag, line)
-			else:
-			    lines.append(line)
-			endFlag = 0
-		    else:
-		        if loop == "":
-			    line = "NOP;\n"
-			if row != 0 or loop != "":
+                        text = lines[0 - endFlag - 1]
+                        if text == "NOP;\n":
+                            del lines[0 - endFlag - 1]
+                            lines.insert(0 - endFlag, line)
+                        else:
+                            lines.append(line)
+                        endFlag = 0
+                    else:
+                        if loop == "":
+                            line = "NOP;\n"
+                        if row != 0 or loop != "":
                             lines.append(line)        
                 else:
-		    endFlag = 0
+                    endFlag = 0
                     if line != "":
                         line += ";\n"
                         lines.append(line)
@@ -437,13 +456,13 @@ class MicrocodeTableWidget(InitTableWidget):
                 else:
                     line = item.text() 
                 if len(oneLpto) > 0:
-		    for info in oneLpto:
-		        if info.margin == 0:
-			    loop = " || Repeat @ (%s)"%(self.register[info.reg])
-			else:
-			    loop = " || Repeat @ (%s - %d)"%(self.register[info.reg], info.margin)
-		        line += loop
-		oneLpto = []
+                    for info in oneLpto:
+                        if info.margin == 0:
+                            loop = " || Repeat @ (%s)"%(self.register[info.reg])
+                        else:
+                            loop = " || Repeat @ (%s - %d)"%(self.register[info.reg], info.margin)
+                        line += loop
+                oneLpto = []
                 #get loop end info
                 if textList[2] != "":
                     line += ";\n"
@@ -465,9 +484,9 @@ class MicrocodeTableWidget(InitTableWidget):
         lines = []
         lines.append(".hmacro main\n")
         allFSM = ""
-	for key in self.startList:
-	    allFSM += key[0]
-	    allFSM += " || "
+        for key in self.startList:
+            allFSM += key[0]
+            allFSM += " || "
         allFSM = allFSM[:-4]
         allFSM += ";\n"
         lines.append(allFSM)
@@ -505,7 +524,7 @@ class MicrocodeTableWidget(InitTableWidget):
             elif startLPPattern.search(string) != None:                     
                 record = string.split(" || ")
                 if len(record) == 1 or startLPPattern.match(record[0]) != None:
-		    self.setItem(row, column, QTableWidgetItem(""))
+                    self.setItem(row, column, QTableWidgetItem(""))
                     self.dataParser(row, column)
                     row += 1
                     if row > self.RowCount:
@@ -522,7 +541,7 @@ class MicrocodeTableWidget(InitTableWidget):
                             if r.group(3) != None:
                                 info.margin = int(r.group(4))
                             else:
-				info.margin = 0
+                                info.margin = 0
                             info.column = column
                             item = QTableWidgetItem("")
                             self.setItem(row, column, item)
@@ -548,24 +567,24 @@ class MicrocodeTableWidget(InitTableWidget):
                     if record.group(3) != None:
                         info.margin = int(record.group(4))
                     else:
-		        info.margin = 0
+                        info.margin = 0
                     info.column = column
                     item = QTableWidgetItem("")
                     self.setItem(row, column, item)
                     self.dataParser(row, column)
                     self.loopBodyList[column].append(info)
             elif oneLPPattern.search(string) != None:
-	        record = string.split(" || ")
-	        if record[0] == "NOP":
-		    text = ""
-		else:
-		    text = record[0]
-		self.setItem(row, column, QTableWidgetItem(text))
+                record = string.split(" || ")
+                if record[0] == "NOP":
+                    text = ""
+                else:
+                    text = record[0]
+                self.setItem(row, column, QTableWidgetItem(text))
                 self.dataParser(row, column)
                 if row > self.RowCount:
                     self.RowCount = row
                     self.setRowCount(row)
-		for lpto in record[1 : ]:
+                for lpto in record[1 : ]:
                     record = oneLPPattern.match(lpto)        
                     info = RectInfo()
                     info.startRow = row
@@ -575,7 +594,7 @@ class MicrocodeTableWidget(InitTableWidget):
                     if record.group(2) != None:
                         info.margin = int(record.group(3))
                     else:
-		        info.margin = 0
+                        info.margin = 0
                     info.column = column
                     self.loopBodyList[column].append(info)
                     if info.endRow > self.loopEndRow:
@@ -602,7 +621,7 @@ class MicrocodeTableWidget(InitTableWidget):
                 if text == "NOP":
                     text = ""
                 else:
-		    if row > self.loopEndRow:
+                    if row > self.loopEndRow:
                         for i in xrange(self.loopEndRow, row):
                             self.array.append(["...."]*(self.ColumnCount))
                             self.loopEndRow = row
