@@ -391,7 +391,7 @@ class MicrocodeTableWidget(InitTableWidget):
                 if item != None and item.text() != "":
                     self.SlotRecordTable[column][0] = 1
                     self.SlotRecordTable[column][1] = max(self.SlotRecordTable[column][1], row)
-        
+        print("test")
         for column in xrange(self.ColumnCount):
             if self.SlotRecordTable[column][0] == 1:
                 lines = []
