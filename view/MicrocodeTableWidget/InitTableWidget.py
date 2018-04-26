@@ -21,6 +21,8 @@ class InitTableWidget(QTableWidget):
 
         self.initRowCount = 2000
         self.initColumnCount = 20
+        self.ColumnCount = self.initColumnCount#need to update!!!
+        self.RowCount = self.initRowCount#need to update!!!
         self.currentRowNum = 0
         self.currentColumnNum = 0
         self.currentTopRow = 0
@@ -29,6 +31,9 @@ class InitTableWidget(QTableWidget):
         self.CurrentColumn = -1
         self.floatDialog = 0
         self.floatDialogFocus = 0
+        #a table to record which slots (columns) are effective, and the last effective ins pos of them
+        #in [0/1, pos] for each column, 0 is ineffective, 1 is effective.
+        self.SlotRecordTable = [[0,-1] for i in xrange(self.initColumnCount)]        
         self.connect(self.horizontalHeader(), SIGNAL("sectionDoubleClicked(int)"), self.setHeader)
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
         #get default background
@@ -440,7 +445,7 @@ class InitTableWidget(QTableWidget):
             data = self.array[i]
             for j in xrange(self.currentColumnNum):
                 del data[self.currentLeftColumn]
-		
+	#change this!!!	
     def dataParser(self, row, column):
         item = self.item(row, column)
         if item != None:
@@ -457,15 +462,15 @@ class InitTableWidget(QTableWidget):
 		    out = self.database.searchMcc(text)
 		    if out != 0:
 		        #item.setBackground(self.defaultBackgroundColor)
-		        item.setTextColor(self.defaultTextColor)
+		        #item.setTextColor(self.defaultTextColor)
 		        item.setWhatsThis(out)	
 		    else:
 		        #item.setBackground(self.errorColor)
-		        item.setTextColor(self.errorColor)
+		        #item.setTextColor(self.errorColor)
 		        item.setWhatsThis("-1")
 		else:
 		    #item.setBackground(self.errorColor)
-		    item.setTextColor(self.errorColor)
+		    #item.setTextColor(self.errorColor)
 		    item.setWhatsThis(str(text))
 	    '''
 	    if item.whatsThis() == "" or item.whatsThis() == "-1":

@@ -27,7 +27,7 @@ class MicrocodeTableWidget(InitTableWidget):
         self.errorColor = QColor(255, 99, 71)
 
     @pyqtSlot(int, int, int, int)   
-    def currentCellChangedSlot(self, currentRow, currentColumn, previousRow, previousColumn):
+    def currentCellChangedSlot(self, currentRow, currentColumn, previousRow, previousColumn):      
         self.dataParser(previousRow, previousColumn)
         self.floatDialogCloseSlot()
         self.CurrentRow = previousRow
@@ -46,7 +46,8 @@ class MicrocodeTableWidget(InitTableWidget):
                 if info.startRow <= currentRow and info.endRow >= currentRow:
                     marginList[info.reg] = info.margin 
         self.itemRegStateSignal.emit(regList, marginList)   
-        #show code input row
+        #show code input row, for instruction latency
+        
         if self.previousPointRow != -1:
             for i in self.previousPointRow:
                 self.earserWholeRowColor(i)   
@@ -62,7 +63,7 @@ class MicrocodeTableWidget(InitTableWidget):
                 rowColor = []
                 outRow = currentRow + int(i)        
                 color = self.getRowBackground(outRow)
-                self.setWholeRowColor(outRow, Qt.blue) 
+                #self.setWholeRowColor(outRow, Qt.blue) 
                 rowColor.append(outRow)
                 rowColor.append(color)
                 self.previousPointRow.append(rowColor)
@@ -383,117 +384,35 @@ class MicrocodeTableWidget(InitTableWidget):
 
     def saveFile(self, fileName):
         fp = open(fileName, "w")
-        endFlag = 0
-        self.startList = dict()
-        oneLpto = []
-        loop = ""
+        #update self.SlotRecordTable
         for column in xrange(self.ColumnCount):
-            rectList = self.loopBodyList[column]
-            lines = []
-            item = self.horizontalHeaderItem(column)
-            headerText = str(item.text())
-            line = ".hmacro %s\n" % (headerText)
-            self.startList[headerText] = self.RowCount
-            lines.append(line)
-            line = ""
-            arrayLen = len(self.array)
-            for row in xrange(self.loopEndRow + 1):
-                if row < arrayLen:
-                    text = self.array[row][column]
-                    textList = text.split(".")
-                else:
-                    textList[0] = ""
-                    textList[2] = ""
-                #get loop start info
-                if textList[0] != "": 
-                    cmpList = [] 
-                    if row == 0 or line == "NOP":
-                        endFlag = 0
-                        line = "" 
-                    elif line != "":
-                        endFlag = 0
-                        line += " || "
-                    cmpList = self.searchLPStart(rectList, row)
-                    if cmpList != []:
-                        #start lpto row
-                        if self.startList[headerText] > row:
-                            self.startList[headerText] = row
-                    oneLpto = []
-                    loop = ""
-                    for info in cmpList:  
-                        if info.startRow == info.endRow:
-                            oneLpto.append(info)
-                        else:
-                            if info.margin == 0:
-                                loop = "LPTO (%df ) @ (%s) || "%(info.num, self.register[info.reg])
-                            else:
-                                loop = "LPTO (%df ) @ (%s - %d) || "%(info.num, self.register[info.reg], info.margin)
-                            line += loop
-                    line = line[:-4]
-                    line += ";\n"
-                    if endFlag != 0:
-                        text = lines[0 - endFlag - 1]
-                        if text == "NOP;\n":
-                            del lines[0 - endFlag - 1]
-                            lines.insert(0 - endFlag, line)
-                        else:
-                            lines.append(line)
-                        endFlag = 0
-                    else:
-                        if loop == "":
-                            line = "NOP;\n"
-                        if row != 0 or loop != "":
-                            lines.append(line)        
-                else:
-                    endFlag = 0
-                    if line != "":
-                        line += ";\n"
-                        lines.append(line)
-                #get item text    
+            for row in xrange(self.RowCount):
                 item = self.item(row, column)
-                if item == None or item.text() == "":
-                    line = "NOP"
-                else:
-                    line = item.text() 
-                if len(oneLpto) > 0:
-                    for info in oneLpto:
-                        if info.margin == 0:
-                            loop = " || Repeat @ (%s)"%(self.register[info.reg])
-                        else:
-                            loop = " || Repeat @ (%s - %d)"%(self.register[info.reg], info.margin)
-                        line += loop
-                oneLpto = []
-                #get loop end info
-                if textList[2] != "":
-                    line += ";\n"
-                    lines.append(line)
-                    cmpList = self.searchLPEnd(rectList, row)
-                    endFlag = 0
-                    for info in cmpList:              
-                        line = str(info.num) + ":\n" 
-                        lines.append(line) 
-                        endFlag += 1
-                    line = ""    
-            if line != "":
-                line += ";\n"
+                if item != None and item.text() != "":
+                    self.SlotRecordTable[column][0] = 1
+                    self.SlotRecordTable[column][1] = max(self.SlotRecordTable[column][1], row)
+        
+        for column in xrange(self.ColumnCount):
+            if self.SlotRecordTable[column][0] == 1:
+                lines = []
+                headeritem = self.horizontalHeaderItem(column)
+                headertext = str(headeritem.text())
+                line = ".hmacro hm_%s\n" % (headertext)
                 lines.append(line)
-            lines.append(".endhmacro\n\n")
-            fp.writelines(lines)
-        #write all FSM
-        self.startList = sorted(self.startList.items(), key=lambda d:d[1], reverse = False)
-        lines = []
-        lines.append(".hmacro main\n")
-        allFSM = ""
-        for key in self.startList:
-            allFSM += key[0]
-            allFSM += " || "
-        allFSM = allFSM[:-4]
-        allFSM += ";\n"
-        lines.append(allFSM)
-        lines.append(".endhmacro\n")
-        fp.writelines(lines)
-        fp.close()                
-
+                for row in xrange(self.SlotRecordTable[column][1] + 1):                   
+                    item = self.item(row, column)
+                    if item == None or item.text() == "":
+                        line = "NOP;"
+                    else:
+                        line = item.text()
+                        if line[-1] != ';':
+                            line += ';'
+                    line += '\n'
+                    lines.append(line)
+                lines.append(".endhmacro\n\n")
+                fp.writelines(lines)   
+        fp.close()               
+        
     def openFile(self, fileName): 
         headerPattern = re.compile("\.hmacro ([a-zA-Z]+[0-9]+)")
         endPattern = re.compile("\.endhmacro")
