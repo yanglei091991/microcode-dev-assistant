@@ -21,22 +21,22 @@ class MainWindow(QMainWindow):
         self.showMaximized()
         splitter = QSplitter(Qt.Horizontal, self)
         self.microcodeTableWidget = MicrocodeTableWidget(self.register, database, splitter)
-        self.mccTreeWidget = MCCTreeWidget(splitter)
-        splitter.addWidget(self.mccTreeWidget)
+        #self.mccTreeWidget = MCCTreeWidget(splitter)
+        #splitter.addWidget(self.mccTreeWidget)
         splitter.addWidget(self.microcodeTableWidget)
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 4)        
+        #splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(0, 4)        
         self.setCentralWidget(splitter)
         self.createAction()
         self.createContextMenu()
         self.createToolBars()
         self.createMenus()
-        self.microcodeTableWidget.itemRegStateSignal.connect(self.itemRegStateSlot)
+        #self.microcodeTableWidget.itemRegStateSignal.connect(self.itemRegStateSlot)
         self.microcodeTableWidget.cellChanged.connect(self.fileContentChanged)
         #auto-fill, disable auto-fill for now
         #self.microcodeTableWidget.cellDelegate.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
         #self.microcodeTableWidget.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
-        self.mccTreeWidget.floatDialogShowSignal.connect(self.microcodeTableWidget.floatDialogShowSlot)
+        #self.mccTreeWidget.floatDialogShowSignal.connect(self.microcodeTableWidget.floatDialogShowSlot)
         self.newFileName = "New File*"
 
     def createAction(self):
@@ -156,7 +156,8 @@ class MainWindow(QMainWindow):
               
         registerToolBar = self.addToolBar("Register")
         #FSMStyleCodeSelect
-        self.FSMCodeSelectCheck = QCheckBox("Enable FSM Code", registerToolBar)      
+        self.FSMCodeSelectCheck = QCheckBox("Enable FSM Code", registerToolBar) 
+        '''     
         self.register0Check = QCheckBox(self.register[0], registerToolBar) 
         self.register0Text = QLineEdit("0", registerToolBar)
         self.register0Text.setFixedSize(40, 20)
@@ -183,12 +184,16 @@ class MainWindow(QMainWindow):
         self.registerText.append(self.register1Text)
         self.registerText.append(self.register2Text)
         self.registerText.append(self.register3Text)
+        '''
         self.connect(self.FSMCodeSelectCheck, SIGNAL("clicked(bool)"), self.FSMCodeSelectSlot)
+        '''
         self.connect(self.register0Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register1Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register2Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register3Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
+        '''
         registerToolBar.addWidget(self.FSMCodeSelectCheck)        
+        '''
         registerToolBar.addWidget(self.register0Check)
         registerToolBar.addWidget(self.register0Text)
         registerToolBar.addWidget(self.register1Check)
@@ -197,6 +202,7 @@ class MainWindow(QMainWindow):
         registerToolBar.addWidget(self.register2Text)
         registerToolBar.addWidget(self.register3Check)
         registerToolBar.addWidget(self.register3Text)
+        '''
 
     @pyqtSlot()
     def newFile(self):
@@ -292,14 +298,17 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def setAllCheckStatus(self, status):
+        '''
         num = len(self.registerCheck)
         for i in xrange(0, num):
             self.registerCheck[i].setCheckState(status)
             self.registerText[i].clear()
             #self.registerText[i].setEnabled(False)
+        '''
 
     @pyqtSlot(list, list)
     def itemRegStateSlot(self, regList, textList):
+        '''
         self.setAllCheckStatus(Qt.Unchecked)
         num = len(regList)
         for i in xrange(0, num):
@@ -308,6 +317,7 @@ class MainWindow(QMainWindow):
         num = len(textList)
         for i in xrange(num):
             self.registerText[i].setText(str(textList[i]))
+        '''
 
     @pyqtSlot(int, int)
     def fileContentChanged(self, row, column):

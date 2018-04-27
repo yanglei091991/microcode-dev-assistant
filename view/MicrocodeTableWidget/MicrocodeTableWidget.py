@@ -45,7 +45,7 @@ class MicrocodeTableWidget(InitTableWidget):
             for info in rectList:
                 if info.startRow <= currentRow and info.endRow >= currentRow:
                     marginList[info.reg] = info.margin 
-        self.itemRegStateSignal.emit(regList, marginList)   
+        #self.itemRegStateSignal.emit(regList, marginList)   
         #show code input row, for instruction latency
         
         if self.previousPointRow != -1:
@@ -91,11 +91,18 @@ class MicrocodeTableWidget(InitTableWidget):
                         row = self.floatDialog.currentRow()
                         num = self.floatDialog.count()
                         if row + 1 < num:
-                            self.floatDialog.setCurrentRow(row + 1)        
-        elif event.key() == Qt.Key_Up and self.floatDialogFocus == 1:
-            row = self.floatDialog.currentRow()
-            if row > 0:
-                self.floatDialog.setCurrentRow(row - 1)
+                            self.floatDialog.setCurrentRow(row + 1)    
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentRow() < (self.rowCount() - 1):
+                self.setCurrentCell(self.currentRow() + 1, self.currentColumn())
+        elif event.key() == Qt.Key_Up:      
+            if self.floatDialogFocus == 1:
+                row = self.floatDialog.currentRow()
+                if row > 0:
+                    self.floatDialog.setCurrentRow(row - 1)
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentRow() > 0:
+                self.setCurrentCell(self.currentRow() - 1, self.currentColumn())
         elif event.key() == Qt.Key_Return:
             if self.floatDialog != 0:
                 item = self.floatDialog.currentItem()
@@ -107,7 +114,22 @@ class MicrocodeTableWidget(InitTableWidget):
                 item = QTableWidgetItem(text)           
                 self.setItem(row, column, item)
                 self.floatDialogCloseSlot()
-            
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentRow() < (self.rowCount() - 1):
+                self.setCurrentCell(self.currentRow() + 1, self.currentColumn())
+        elif event.key() == Qt.Key_Left:
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentColumn() > 0:
+                self.setCurrentCell(self.currentRow(), self.currentColumn() - 1)            
+        elif event.key() == Qt.Key_Right:
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentColumn() < (self.columnCount() - 1):
+                self.setCurrentCell(self.currentRow(), self.currentColumn() + 1)
+        elif event.key() == Qt.Key_Tab:
+            #change item position
+            if self.currentColumn() >= 0 and self.currentRow() >= 0 and self.currentColumn() < (self.columnCount() - 1):
+                self.setCurrentCell(self.currentRow(), self.currentColumn() + 1)
+                
         if event.key() < 0x20 or event.key() > 0xff:
             if event.key() != Qt.Key_Backspace:
                 return
@@ -385,14 +407,26 @@ class MicrocodeTableWidget(InitTableWidget):
     def saveFile(self, fileName):
         fp = open(fileName, "w")
         #update self.SlotRecordTable, effective row/column count
+        startrow = self.MaxRowNum #init with big number
         for column in xrange(self.ColumnCount):
+            top = -1
+            bottom = -1
             for row in xrange(self.RowCount):
                 item = self.item(row, column)
                 if item != None and item.text() != "":
-                    self.SlotRecordTable[column][0] = 1
-                    self.SlotRecordTable[column][1] = max(self.SlotRecordTable[column][1], row)
                     self.EffectiveColumnCount = max(self.EffectiveColumnCount, column)
                     self.EffectiveRowCount = max(self.EffectiveRowCount, row)
+                    if top == -1:
+                        top = row
+                    bottom = max(bottom, row)
+            if top != -1:
+                self.SlotRecordTable[column][0] = top
+                self.SlotRecordTable[column][1] = bottom
+                startrow = min(startrow, top)
+            else:
+                self.SlotRecordTable[column][0] = -1
+                self.SlotRecordTable[column][1] = -1
+        self.InsStartRow = startrow
 
         #generate FSM style code
         if self.FSMCodeSelectEnable == True:
@@ -417,17 +451,30 @@ class MicrocodeTableWidget(InitTableWidget):
                     fp.writelines(lines)
         #generate ordinary VLIW style code
         else:
-            lines = []
-            for row in xrange(self.EffectiveRowCount + 1):
+            lines = [] 
+            for row in xrange(self.InsStartRow, self.EffectiveRowCount + 1):
                 line = ""
                 for column in xrange(self.EffectiveColumnCount + 1):
-                    item = self.item(row, column)
-                    if item != None and item.text() != "":
-                        if line != "":
-                            line += " || "
-                        line += item.text()
-                        if line[-1] == ';' and len(line) > 1:
-                            line = line[0:-1]
+                    instext = ""
+                    if self.SlotRecordTable[column][0] == -1: #skip ineffective column
+                        continue
+                    
+                    startdistance = self.SlotRecordTable[column][0] - self.InsStartRow
+                    item = self.item(row + startdistance, column)
+                    if row == self.InsStartRow:
+                        if startdistance == 0:
+                            instext += item.text()#here item must not be None or NOP
+                        else:
+                            instext = "%s.wait %d(mode0)," % (self.horizontalHeaderItem(column).text(), startdistance - 1)
+                    else:
+                        if item != None and item.text() != "":
+                            instext = item.text()
+                    if line == "":
+                        line += instext
+                    else:
+                        line += " || " + instext                   
+                    if line[-1] == ';' and len(line) > 1:
+                        line = line[0:-1]                              
                 if line == "":
                     line = "NOP"
                 line += ";\n"

@@ -21,8 +21,8 @@ class InitTableWidget(QTableWidget):
 
         self.initRowCount = 2000
         self.initColumnCount = 20
-        self.EffectiveColumnCount = 0#need to update!!!
-        self.EffectiveRowCount = 0#need to update!!!
+        self.EffectiveColumnCount = 0 #need to update!!!
+        self.EffectiveRowCount = 0 #need to update!!!
         self.currentRowNum = 0
         self.currentColumnNum = 0
         self.currentTopRow = 0
@@ -32,9 +32,12 @@ class InitTableWidget(QTableWidget):
         self.floatDialog = 0
         self.floatDialogFocus = 0
         self.FSMCodeSelectEnable = False
-        #a table to record which slots (columns) are effective, and the last effective ins pos of them
-        #in [0/1, pos] for each column, 0 is ineffective, 1 is effective.
-        self.SlotRecordTable = [[0,-1] for i in xrange(self.initColumnCount)]        
+        self.MaxRowNum = 3000 #need to keep it!
+        self.MaxColumnNum = 50 #need to keep it!
+        self.InsStartRow = self.MaxRowNum #the row number of 1st instruction
+        #a table to record which slots (columns) are effective, and the first and last effective ins pos of them
+        # [top, bottom] for each column
+        self.SlotRecordTable = [[-1,-1] for i in xrange(self.initColumnCount)]        
         self.connect(self.horizontalHeader(), SIGNAL("sectionDoubleClicked(int)"), self.setHeader)
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
         #get default background
