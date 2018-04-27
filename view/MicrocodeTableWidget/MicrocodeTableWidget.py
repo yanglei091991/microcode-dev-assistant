@@ -127,7 +127,7 @@ class MicrocodeTableWidget(InitTableWidget):
         else:
             if row == self.CurrentRow and column == self.CurrentColumn:
                 if len(string) > 1:
-                    string = string[0:len(string)-1]
+                    string = string[0:-1]
                 else:
                     string = ""
                 self.setItem(row, column, QTableWidgetItem(string))
@@ -384,33 +384,56 @@ class MicrocodeTableWidget(InitTableWidget):
 
     def saveFile(self, fileName):
         fp = open(fileName, "w")
-        #update self.SlotRecordTable
+        #update self.SlotRecordTable, effective row/column count
         for column in xrange(self.ColumnCount):
             for row in xrange(self.RowCount):
                 item = self.item(row, column)
                 if item != None and item.text() != "":
                     self.SlotRecordTable[column][0] = 1
                     self.SlotRecordTable[column][1] = max(self.SlotRecordTable[column][1], row)
-        print("test")
-        for column in xrange(self.ColumnCount):
-            if self.SlotRecordTable[column][0] == 1:
-                lines = []
-                headeritem = self.horizontalHeaderItem(column)
-                headertext = str(headeritem.text())
-                line = ".hmacro hm_%s\n" % (headertext)
-                lines.append(line)
-                for row in xrange(self.SlotRecordTable[column][1] + 1):                   
-                    item = self.item(row, column)
-                    if item == None or item.text() == "":
-                        line = "NOP;"
-                    else:
-                        line = item.text()
-                        if line[-1] != ';':
-                            line += ';'
-                    line += '\n'
+                    self.EffectiveColumnCount = max(self.EffectiveColumnCount, column)
+                    self.EffectiveRowCount = max(self.EffectiveRowCount, row)
+
+        #generate FSM style code
+        if self.FSMCodeSelectEnable == True:
+            for column in xrange(self.ColumnCount):
+                if self.SlotRecordTable[column][0] == 1:
+                    lines = []
+                    headeritem = self.horizontalHeaderItem(column)
+                    headertext = str(headeritem.text())
+                    line = ".hmacro hm_%s\n" % (headertext)
                     lines.append(line)
-                lines.append(".endhmacro\n\n")
-                fp.writelines(lines)   
+                    for row in xrange(self.SlotRecordTable[column][1] + 1):                   
+                        item = self.item(row, column)
+                        if item == None or item.text() == "":
+                            line = "NOP;"
+                        else:
+                            line = item.text()
+                            if line[-1] != ';':
+                                line += ';'
+                        line += '\n'
+                        lines.append(line)
+                    lines.append(".endhmacro\n\n")
+                    fp.writelines(lines)
+        #generate ordinary VLIW style code
+        else:
+            lines = []
+            for row in xrange(self.EffectiveRowCount + 1):
+                line = ""
+                for column in xrange(self.EffectiveColumnCount + 1):
+                    item = self.item(row, column)
+                    if item != None and item.text() != "":
+                        if line != "":
+                            line += " || "
+                        line += item.text()
+                        if line[-1] == ';' and len(line) > 1:
+                            line = line[0:-1]
+                if line == "":
+                    line = "NOP"
+                line += ";\n"
+                lines.append(line)        
+            fp.writelines(lines)
+            
         fp.close()               
         
     def openFile(self, fileName): 

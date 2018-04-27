@@ -18,6 +18,7 @@ class MainWindow(QMainWindow):
         self.register = ["KI12", "KI13", "KI14", "KI15"]
         self.setWindowTitle("Graphic Microcode Editor")
         self.resize(800, 600)
+        self.showMaximized()
         splitter = QSplitter(Qt.Horizontal, self)
         self.microcodeTableWidget = MicrocodeTableWidget(self.register, database, splitter)
         self.mccTreeWidget = MCCTreeWidget(splitter)
@@ -32,7 +33,7 @@ class MainWindow(QMainWindow):
         self.createMenus()
         self.microcodeTableWidget.itemRegStateSignal.connect(self.itemRegStateSlot)
         self.microcodeTableWidget.cellChanged.connect(self.fileContentChanged)
-        #111 auto-fill, disable auto-fill for now
+        #auto-fill, disable auto-fill for now
         #self.microcodeTableWidget.cellDelegate.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
         #self.microcodeTableWidget.searchTreeSignal.connect(self.mccTreeWidget.searchMcc)
         self.mccTreeWidget.floatDialogShowSignal.connect(self.microcodeTableWidget.floatDialogShowSlot)
@@ -152,8 +153,10 @@ class MainWindow(QMainWindow):
         editToolBar.addAction(self.copyAction)
         editToolBar.addAction(self.pasteAction)
         editToolBar.addAction(self.fillAction)
-
+              
         registerToolBar = self.addToolBar("Register")
+        #FSMStyleCodeSelect
+        self.FSMCodeSelectCheck = QCheckBox("Enable FSM Code", registerToolBar)      
         self.register0Check = QCheckBox(self.register[0], registerToolBar) 
         self.register0Text = QLineEdit("0", registerToolBar)
         self.register0Text.setFixedSize(40, 20)
@@ -180,10 +183,12 @@ class MainWindow(QMainWindow):
         self.registerText.append(self.register1Text)
         self.registerText.append(self.register2Text)
         self.registerText.append(self.register3Text)
+        self.connect(self.FSMCodeSelectCheck, SIGNAL("clicked(bool)"), self.FSMCodeSelectSlot)
         self.connect(self.register0Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register1Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register2Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
         self.connect(self.register3Check, SIGNAL("clicked(bool)"), self.registerCheckSlot)
+        registerToolBar.addWidget(self.FSMCodeSelectCheck)        
         registerToolBar.addWidget(self.register0Check)
         registerToolBar.addWidget(self.register0Text)
         registerToolBar.addWidget(self.register1Check)
@@ -258,7 +263,10 @@ class MainWindow(QMainWindow):
         else:
             event.accept()
         
-
+    @pyqtSlot(bool)
+    def FSMCodeSelectSlot(self, checkState):
+        self.microcodeTableWidget.FSMCodeSelectEnable = checkState
+    
     @pyqtSlot(bool)        
     def registerCheckSlot(self, checkState):
         if self.sender() in self.registerCheck:

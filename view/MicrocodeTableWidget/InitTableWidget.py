@@ -21,8 +21,8 @@ class InitTableWidget(QTableWidget):
 
         self.initRowCount = 2000
         self.initColumnCount = 20
-        self.ColumnCount = self.initColumnCount#need to update!!!
-        self.RowCount = self.initRowCount#need to update!!!
+        self.EffectiveColumnCount = 0#need to update!!!
+        self.EffectiveRowCount = 0#need to update!!!
         self.currentRowNum = 0
         self.currentColumnNum = 0
         self.currentTopRow = 0
@@ -31,6 +31,7 @@ class InitTableWidget(QTableWidget):
         self.CurrentColumn = -1
         self.floatDialog = 0
         self.floatDialogFocus = 0
+        self.FSMCodeSelectEnable = False
         #a table to record which slots (columns) are effective, and the last effective ins pos of them
         #in [0/1, pos] for each column, 0 is ineffective, 1 is effective.
         self.SlotRecordTable = [[0,-1] for i in xrange(self.initColumnCount)]        
