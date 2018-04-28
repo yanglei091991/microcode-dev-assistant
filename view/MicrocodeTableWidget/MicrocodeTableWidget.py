@@ -408,14 +408,16 @@ class MicrocodeTableWidget(InitTableWidget):
         fp = open(fileName, "w")
         #update self.SlotRecordTable, effective row/column count
         startrow = self.MaxRowNum #init with big number
+        effectivecolumncount = -1
+        effectiverowcount = -1
         for column in xrange(self.ColumnCount):
             top = -1
             bottom = -1
             for row in xrange(self.RowCount):
                 item = self.item(row, column)
                 if item != None and item.text() != "":
-                    self.EffectiveColumnCount = max(self.EffectiveColumnCount, column)
-                    self.EffectiveRowCount = max(self.EffectiveRowCount, row)
+                    effectivecolumncount = max(effectivecolumncount, column)
+                    effectiverowcount = max(effectiverowcount, row)
                     if top == -1:
                         top = row
                     bottom = max(bottom, row)
@@ -427,6 +429,9 @@ class MicrocodeTableWidget(InitTableWidget):
                 self.SlotRecordTable[column][0] = -1
                 self.SlotRecordTable[column][1] = -1
         self.InsStartRow = startrow
+        self.EffectiveColumnCount = effectivecolumncount
+        self.EffectiveRowCount = effectiverowcount
+        print(str(self.EffectiveColumnCount) + ',' + str(self.EffectiveRowCount) + '\n')
 
         #generate FSM style code
         if self.FSMCodeSelectEnable == True:
@@ -460,21 +465,22 @@ class MicrocodeTableWidget(InitTableWidget):
                         continue
                     
                     startdistance = self.SlotRecordTable[column][0] - self.InsStartRow
-                    item = self.item(row + startdistance, column)
+                    item = self.item(row + startdistance - 1, column)
                     if row == self.InsStartRow:
                         if startdistance == 0:
-                            instext += item.text()#here item must not be None or NOP
+                            instext += ""#the 1st instruction, nop in parallel with wait instructions
                         else:
-                            instext = "%s.wait %d(mode0)," % (self.horizontalHeaderItem(column).text(), startdistance - 1)
+                            instext = "%s.wait %d(mode0)" % (self.horizontalHeaderItem(column).text(), startdistance)
                     else:
                         if item != None and item.text() != "":
                             instext = item.text()
-                    if line == "":
-                        line += instext
-                    else:
-                        line += " || " + instext                   
-                    if line[-1] == ';' and len(line) > 1:
-                        line = line[0:-1]                              
+                    if instext != "":
+                        if line == "":
+                            line += instext
+                        else:
+                            line += " || " + instext                   
+                        if line[-1] == ';' and len(line) > 1:
+                            line = line[0:-1]                              
                 if line == "":
                     line = "NOP"
                 line += ";\n"
