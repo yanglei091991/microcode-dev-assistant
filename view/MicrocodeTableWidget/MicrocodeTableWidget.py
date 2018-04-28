@@ -4,10 +4,12 @@ from PyQt4.QtGui import QTableWidgetItem, QBrush, QColor
 from PyQt4.QtCore import Qt, pyqtSignal, pyqtSlot, SIGNAL, QStringList, QString
 from view.MicrocodeTableWidget.InitTableWidget import InitTableWidget
 from view.Utils import warning
+from fileinput import filename
 sys.path.append("../..")
 from data.RectInfo import RectInfo
 from data.MMPULite import MMPULite
 import re
+from subprocess import Popen, PIPE
 
 class MicrocodeTableWidget(InitTableWidget):  
     searchTreeSignal = pyqtSignal(int, int, str)
@@ -431,7 +433,6 @@ class MicrocodeTableWidget(InitTableWidget):
         self.InsStartRow = startrow
         self.EffectiveColumnCount = effectivecolumncount
         self.EffectiveRowCount = effectiverowcount
-        print(str(self.EffectiveColumnCount) + ',' + str(self.EffectiveRowCount) + '\n')
 
         #generate FSM style code
         if self.FSMCodeSelectEnable == True:
@@ -487,7 +488,17 @@ class MicrocodeTableWidget(InitTableWidget):
                 lines.append(line)        
             fp.writelines(lines)
             
-        fp.close()               
+        fp.close()
+        
+        '''
+        usage of calling command line
+        '''               
+        arg1 = 'ls'
+        arg2 = '-a'
+        popen = Popen([arg1, arg2], stdout=PIPE, stderr=PIPE)
+        output, err = popen.communicate()
+        rcode = popen.returncode
+        
         
     def openFile(self, fileName): 
         headerPattern = re.compile("\.hmacro ([a-zA-Z]+[0-9]+)")
